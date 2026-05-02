@@ -9,9 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@liveblocks/client": "^3.18.5",
+    "@liveblocks/react": "^3.18.5",
+    "@liveblocks/yjs": "^3.18.5",
+    "@monaco-editor/react": "^4.7.0",
+    "lucide-react": "^1.14.0",
     "next": "16.2.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "y-monaco": "^0.1.6",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.30"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
