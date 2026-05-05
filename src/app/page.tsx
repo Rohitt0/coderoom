@@ -1,77 +1,97 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, ArrowRight, Terminal } from "lucide-react";
 
-export default function Home() {
-  const [roomId, setRoomId] = useState('');
-  const [username, setUsername] = useState(''); // New state for username
+export default function LandingPage() {
+  const [roomCode, setRoomCode] = useState("");
   const router = useRouter();
 
-  const handleJoin = (e: React.FormEvent) => {
+  // 1. PLACE YOUR IMAGE LINK HERE
+  const bgImageUrl = "https://i.ibb.co/7JjhszHN/Nova-04-1.png";
+
+  const handleJoinRoom = (e: React.FormEvent) => {
     e.preventDefault();
-    if (roomId.trim() && username.trim()) {
-      router.push(`/room/${roomId}?name=${encodeURIComponent(username)}`);
+    if (roomCode.trim()) {
+      router.push(`/room/${roomCode.trim()}`);
     }
   };
 
-  const createNewRoom = () => {
-    if (!username.trim()) {
-      alert("Please enter a username first");
-      return;
-    }
-    const randomId = Math.random().toString(36).substring(2, 9);
-    router.push(`/room/${randomId}?name=${encodeURIComponent(username)}`);
+  const handleCreateRoom = () => {
+    const newId = Math.random().toString(36).substring(2, 9);
+    router.push(`/room/${newId}`);
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-[#0f0f0f] text-white p-6">
-      <div className="max-w-md w-full space-y-6 bg-[#1e1e1e] p-10 rounded-2xl border border-[#333] shadow-2xl">
-        <div className="text-center">
-          <h1 className="text-4xl font-black tracking-tighter text-blue-500">CodeRoom</h1>
+    <div 
+      className="min-h-screen text-[#ededed] flex flex-col items-center justify-between py-16 selection:bg-blue-500/30 font-sans bg-cover bg-center bg-no-repeat"
+      style={{ 
+        // 2. This applies the image and a dark tint so your content stays sharp
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('${bgImageUrl}')`,
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      
+      {/* --- Header --- */}
+      <div className="flex items-center gap-2 opacity-50">
+        <div className="bg-blue-600 p-1.5 rounded-lg">
+          <Terminal size={18} className="text-white" />
         </div>
-
-        {/* Username Input - Always required */}
-        <div className="space-y-2">
-          <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest ml-1">Your Name</label>
-          <input
-            type="text"
-            placeholder="e.g. Rohit"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
-          />
-        </div>
-
-        <button 
-          onClick={createNewRoom}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all active:scale-95"
-        >
-          Create New Room
-        </button>
-
-        <div className="relative flex items-center py-2">
-          <div className="flex-grow border-t border-[#333]"></div>
-          <span className="flex-shrink mx-4 text-gray-600 text-[10px] font-bold uppercase">OR</span>
-          <div className="flex-grow border-t border-[#333]"></div>
-        </div>
-
-        <form onSubmit={handleJoin} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Enter Room Code"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-            className="w-full bg-[#121212] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none font-mono"
-          />
-          <button 
-            type="submit"
-            className="w-full bg-[#252526] hover:bg-[#2d2d2e] border border-[#444] text-gray-300 font-bold py-4 rounded-xl transition-all"
-          >
-            Join with Code
-          </button>
-        </form>
+        <span className="text-sm font-bold tracking-tighter uppercase font-mono">CodeRoom</span>
       </div>
+
+      {/* --- Main Content --- */}
+      <div className="w-full max-w-[400px] px-6 text-center flex flex-col gap-10">
+        <div>
+          <h1 className="text-5xl font-bold tracking-tight mb-4">
+            Build together.
+          </h1>
+          <p className="text-gray-400 text-sm">
+            Real-time collaborative coding environment.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-6 w-full">
+          <form 
+            onSubmit={handleJoinRoom} 
+            className="flex items-center gap-2 w-full bg-[#141414]/80 backdrop-blur-md border border-[#262626] rounded-xl p-2 focus-within:border-blue-500/50 transition-all shadow-sm"
+          >
+            <input 
+              type="text"
+              placeholder="Enter Room Code"
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value)}
+              autoComplete="off"
+              className="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-white placeholder:text-gray-600"
+            />
+            <button 
+              type="submit"
+              className="h-10 w-10 shrink-0 bg-blue-600 rounded-lg text-white hover:bg-blue-500 transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-blue-900/20"
+            >
+              <ArrowRight size={18} />
+            </button>
+          </form>
+
+          <div className="flex items-center gap-4 py-1">
+            <div className="h-[1px] flex-1 bg-[#262626]"></div>
+            <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">OR</span>
+            <div className="h-[1px] flex-1 bg-[#262626]"></div>
+          </div>
+
+          <button 
+            onClick={handleCreateRoom}
+            className="w-full bg-white text-black py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-all active:scale-[0.98]"
+          >
+            <Plus size={18} /> Create New Space
+          </button>
+        </div>
+      </div>
+
+      {/* --- Footer --- */}
+      <footer className="text-[10px] text-gray-700 font-mono tracking-widest uppercase">
+        v1.0.4-stable // next.js 16.2.4
+      </footer>
     </div>
   );
 }

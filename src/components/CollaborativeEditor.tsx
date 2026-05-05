@@ -1,206 +1,203 @@
-'use client';
+"use client";
 
-import { useRoom, useStorage, useMutation, useOthers, useSelf } from "@liveblocks/react/suspense";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { basicSetup, EditorView } from "codemirror";
+import { EditorState } from "@codemirror/state";
+import { javascript } from "@codemirror/lang-javascript";
+import { yCollab } from "y-codemirror.next";
 import * as Y from "yjs";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import { MonacoBinding } from "y-monaco";
-import { Editor } from "@monaco-editor/react";
-import {
-  FolderIcon,
-  FileCodeIcon,
-  DownloadIcon,
-  TerminalIcon,
-  ChevronRightIcon,
-  PlayIcon,
-  FilePlusIcon,
-  FolderPlusIcon,
-  RotateCwIcon,
-  Undo2Icon,
-  Redo2Icon
-} from "lucide-react";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+import { useRoom, useSelf, useStorage } from "@liveblocks/react/suspense";
+import { Avatars } from "@/components/Avatars";
 
-// --- Step 1: Presence Avatars Component ---
-function Avatars() {
-  const others = useOthers();
-  const self = useSelf();
-
-  return (
-    <div className="flex items-center -space-x-2 overflow-hidden px-2">
-      {self && (
-        <div className="relative inline-block h-7 w-7 rounded-full ring-2 ring-black hover:z-10 transition-transform hover:scale-110 cursor-help" title={self.info.name}>
-          <img className="rounded-full" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${self.info.name}`} alt="Me" />
-        </div>
-      )}
-      {others.slice(0, 3).map(({ connectionId, info }) => (
-        <div key={connectionId} className="relative inline-block h-7 w-7 rounded-full ring-2 ring-black hover:z-10 transition-transform hover:scale-110 cursor-help" title={info.name}>
-          <img className="rounded-full" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${info.name}`} alt="User" />
-        </div>
-      ))}
-      {others.length > 3 && (
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#222] text-[9px] font-bold text-white ring-2 ring-black">
-          +{others.length - 3}
-        </div>
-      )}
-    </div>
-  );
+declare global {
+  interface Window {
+    loadPyodide: any;
+  }
 }
 
-export function CollaborativeEditor({ username }: { username: string }) {
+export default function CollaborativeEditor({ 
+  username, 
+  activeFileId 
+}: { 
+  username: string; 
+  activeFileId: string | null 
+}) {
   const room = useRoom();
-  const [editorRef, setEditorRef] = useState<any>(null);
-  const [undoManager, setUndoManager] = useState<Y.UndoManager | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [output, setOutput] = useState("Console initialized...");
-  const [files, setFiles] = useState([
-    { id: '1', name: "server.js", type: "file", iconColor: "text-yellow-500" },
-    { id: '2', name: "src", type: "folder", iconColor: "text-gray-500" },
-    { id: '3', name: "package.json", type: "file", iconColor: "text-blue-400" },
-  ]);
+  const provider = getYjsProviderForRoom(room);
+  
+  const me = useSelf();
+  const infoName = (me?.info as any)?.name || username || "Anonymous";
+  const infoColor = (me?.info as any)?.color || "#00bfff";
+  
+  const files = useStorage((root: any) => root.files);
+  
+  const [element, setElement] = useState<HTMLElement>();
+  const [output, setOutput] = useState<string>("");
+  const [pyodide, setPyodide] = useState<any>(null);
 
-  const language = useStorage((root) => root.language) as string || "javascript";
-  const updateLanguage = useMutation(({ storage }, newLang: string) => { storage.set("language", newLang); }, []);
+  const ref = useCallback((node: HTMLElement | null) => {
+    if (node) setElement(node);
+  }, []);
 
-  // --- Step 3: Custom Pitch-Black Theme ---
-  const handleEditorWillMount = (monaco: any) => {
-    monaco.editor.defineTheme('code-room-dark', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [
-        { token: 'comment', foreground: '6272a4', fontStyle: 'italic' },
-        { token: 'keyword', foreground: 'ff79c6' },
-        { token: 'string', foreground: 'f1fa8c' },
-      ],
-      colors: {
-        'editor.background': '#000000', // Pitch Black match for image_b4607d.png
-        'editor.lineHighlightBackground': '#ffffff08',
-        'editorCursor.foreground': '#3b82f6',
-      }
-    });
-  };
+  const activeFile = files?.find((f: any) => f.id === activeFileId);
+  const activeFileName = activeFile?.name || "";
+  const isPython = activeFileName.toLowerCase().endsWith(".py");
 
-  // --- Step 4: Yjs Setup with UndoManager ---
   useEffect(() => {
-    if (!editorRef || !room) return;
-    const ydoc = new Y.Doc();
-    const type = ydoc.getText("monaco");
-    const provider = new LiveblocksYjsProvider(room, ydoc);
-    
-    const manager = new Y.UndoManager(type);
-    setUndoManager(manager);
+    async function loadPythonEngine() {
+      if (typeof window !== "undefined" && window.loadPyodide && !pyodide) {
+        try {
+          const py = await window.loadPyodide({
+            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/",
+          });
+          setPyodide(py);
+        } catch (err) {
+          console.error("Pyodide failed to load:", err);
+        }
+      }
+    }
+    loadPythonEngine();
+  }, [pyodide]);
 
-    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-    const userColor = colors[Math.floor(Math.random() * colors.length)];
-    provider.awareness.setLocalStateField("user", { 
-      name: username || "Anonymous", 
-      color: userColor,
-      colorLight: userColor + "33" 
+  useEffect(() => {
+    provider.awareness.setLocalStateField("user", {
+      name: infoName,
+      color: infoColor,
+      colorLight: infoColor + "80", 
+    });
+  }, [provider, infoName, infoColor]); 
+
+  const runCode = async () => {
+    if (!activeFileId) return;
+    const code = provider.getYDoc().getText(activeFileId).toString();
+    const logs: string[] = [];
+    const systemPrint = window.print;
+    window.print = () => {}; 
+
+    try {
+      if (isPython) {
+        if (!pyodide) {
+          setOutput("Python loading...");
+          window.print = systemPrint;
+          return;
+        }
+        pyodide.setStdout({ batched: (msg: string) => logs.push(msg) });
+        await pyodide.runPythonAsync(code);
+        setOutput(logs.join("\n") || "Python executed.");
+      } else {
+        const customConsole = { 
+          log: (...args: any[]) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '))
+        };
+        const execute = new Function("console", `const print = console.log; \n ${code}`);
+        execute(customConsole); 
+        setOutput(logs.join("\n") || "JS executed successfully.");
+      }
+    } catch (err: any) {
+      setOutput(`Error: ${err.message}`);
+    } finally {
+      window.print = systemPrint;
+    }
+  };
+
+  const runCodeRef = useRef(runCode);
+  useEffect(() => {
+    runCodeRef.current = runCode;
+  }, [runCode]);
+
+  useEffect(() => {
+    const handler = () => runCodeRef.current();
+    window.addEventListener('trigger-run-code', handler);
+    return () => window.removeEventListener('trigger-run-code', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!element || !room || !activeFileId) return;
+
+    const ydoc = provider.getYDoc();
+    const ytext = ydoc.getText(activeFileId);
+
+    const state = EditorState.create({
+      doc: ytext.toString(),
+      extensions: [
+        basicSetup,
+        javascript(),
+        yCollab(ytext, provider.awareness),
+        EditorView.theme({
+          "&": { height: "100%", width: "100%", fontSize: "14px", color: "#e3e3e3", backgroundColor: "transparent" },
+          ".cm-scroller": { overflow: "auto", fontFamily: "monospace" },
+          ".cm-content": { minHeight: "100%", padding: "12px 0" },
+          ".cm-gutters": { backgroundColor: "#121212", color: "#666", borderRight: "1px solid rgba(255,255,255,0.05)" },
+          ".cm-cursor": { borderLeftColor: "#ffffff !important", borderLeftWidth: "2px" },
+          "&.cm-focused": { outline: "none" }
+        }, { dark: true })
+      ],
     });
 
-    const binding = new MonacoBinding(type, editorRef.getModel(), new Set([editorRef]), provider.awareness);
-    return () => { ydoc.destroy(); provider.destroy(); binding.destroy(); };
-  }, [editorRef, room, username]);
+    const view = new EditorView({ state, parent: element });
 
-  // Utility Actions
-  const handleDownload = () => {
-    if (!editorRef) return;
-    const blob = new Blob([editorRef.getValue()], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url; link.download = `code-${room.id}.txt`; link.click();
-    URL.revokeObjectURL(url);
-  };
+    return () => {
+      view.destroy();
+    };
+  }, [element, room, provider, activeFileId]);
 
   return (
-    <div className="flex h-screen w-full flex-col bg-black text-[#cccccc] overflow-hidden">
-      
-      {/* --- Step 2: Refined Header --- */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222] bg-black px-4">
-        <div className="flex items-center gap-4">
-          <span className="text-xl font-black tracking-tighter text-blue-500">CR</span>
-          <div className="h-4 w-[1px] bg-[#333]"></div>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-gray-500">
-            src <span className="text-gray-700">/</span> server.js
-          </span>
+    <div className="flex flex-col w-full h-full bg-[#121212] overflow-hidden">
+      {/* Header with inline styles for padding and margin */}
+      <header 
+        className="h-14 shrink-0 flex items-center justify-between border-b border-white/5 bg-[#121212]"
+        style={{ paddingLeft: '40px', paddingRight: '40px' }}
+      >
+        
+        <div className="flex items-center" style={{ marginLeft: '20px' }}>
+          <div className="flex items-center text-xs font-mono text-gray-500">
+            <span className="font-bold tracking-widest uppercase text-[10px] text-gray-600">
+              Room Code =
+            </span>
+            <span 
+              className="text-gray-300 select-all tracking-tighter" 
+              style={{ marginLeft: '12px' }}
+            >
+              {room.id}
+            </span>
+          </div>
+
+          {isPython && !pyodide && activeFileId && (
+            <span className="text-blue-400 text-[10px] font-mono" style={{ marginLeft: '40px' }}>
+              Pyodide Loading...
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 border-r border-[#222] pr-4">
-            <button onClick={() => undoManager?.undo()} className="p-2 hover:bg-[#111] rounded transition-colors" title="Undo"><Undo2Icon size={16}/></button>
-            <button onClick={() => undoManager?.redo()} className="p-2 hover:bg-[#111] rounded transition-colors" title="Redo"><Redo2Icon size={16}/></button>
-          </div>
-          
-          <Avatars /> {/* Step 1: Presence UI */}
-          
-          <button 
-            onClick={handleDownload}
-            className="flex items-center gap-2 rounded bg-[#111] px-3 py-1.5 text-xs font-bold border border-[#333] hover:bg-[#222] transition-all"
-          >
-            <DownloadIcon size={14} /> Download
-          </button>
-          <button className="rounded bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition-all">Share</button>
+        <div className="flex items-center">
+          <Avatars username={username} />
         </div>
+
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* --- Explorer Sidebar --- */}
-        <aside className="w-64 flex flex-col border-r border-[#222] bg-black shrink-0 select-none">
-          <div className="group flex items-center justify-between p-3 text-[10px] font-bold uppercase tracking-widest text-gray-600">
-            <span>Explorer</span>
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <FilePlusIcon size={14} className="cursor-pointer hover:text-white" />
-              <FolderPlusIcon size={14} className="cursor-pointer hover:text-white" />
-              <RotateCwIcon size={14} className="cursor-pointer hover:text-white" />
+      {!activeFileId ? (
+        <div className="flex-1 flex items-center justify-center text-gray-600 text-[11px] uppercase tracking-widest font-mono">
+          Create or select a file to start coding.
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 relative">
+            <div className="absolute inset-0 w-full h-full text-left" ref={ref}></div>
+          </div>
+          
+          {/* Forced Height and Padding for Output Window */}
+          <div 
+            className="shrink-0 bg-[#181818] border-t border-[#2b2b2b] p-4 font-mono text-xs overflow-auto flex flex-col"
+            style={{ height: '200px', paddingLeft: '30px' }} 
+          >
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-600 uppercase text-[9px] tracking-widest font-bold">Terminal Output</span>
+              <span className="text-gray-600 text-[9px]">{activeFileName}</span>
             </div>
+            <pre className="text-green-400 whitespace-pre-wrap">{output || "Waiting for execution..."}</pre>
           </div>
-          <div className="flex-1 overflow-y-auto pt-2">
-            <div className="flex items-center gap-1 px-3 py-1.5 bg-[#111] text-xs cursor-pointer"><ChevronRightIcon size={14} className="rotate-90" /><FolderIcon size={16} className="text-blue-500 fill-blue-500/10" /><span className="font-semibold text-white">coderoom</span></div>
-            <div className="pl-4 mt-1">
-              {files.map(f => (
-                <div key={f.id} className="flex items-center gap-2 px-4 py-1.5 hover:bg-[#111] cursor-pointer text-xs transition-colors">
-                  {f.type === "folder" ? <FolderIcon size={14} className={f.iconColor} /> : <FileCodeIcon size={14} className={f.iconColor} />}
-                  <span className={f.type === "folder" ? "opacity-60" : ""}>{f.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        {/* --- Main Workspace --- */}
-        <main className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1">
-            <Editor
-              height="100%"
-              theme="code-room-dark"
-              language={language}
-              onMount={(editor) => setEditorRef(editor)}
-              beforeMount={handleEditorWillMount}
-              options={{
-                fontSize: 14,
-                fontFamily: "'Fira Code', monospace",
-                minimap: { enabled: false },
-                padding: { top: 20 },
-                automaticLayout: true,
-                scrollbar: { vertical: 'hidden', horizontal: 'hidden' }
-              }}
-            />
-          </div>
-
-          {/* --- Output Section --- */}
-          <div className="h-44 flex flex-col border-t border-[#222] bg-black">
-            <div className="flex items-center justify-between border-b border-[#222] px-4 py-2">
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-600"><TerminalIcon size={12} /> Console</div>
-              <button 
-                onClick={() => setOutput(`Executing ${language} script...\n> Success: Compilation finished.`)}
-                className="flex items-center gap-1 rounded bg-blue-600/10 px-2.5 py-1 text-[10px] font-bold text-blue-400 hover:bg-blue-600/20"
-              >
-                <PlayIcon size={10} fill="currentColor" /> Run Script
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 font-mono text-xs text-green-500 whitespace-pre-wrap">{output}</div>
-          </div>
-        </main>
-      </div>
+        </>
+      )}
     </div>
   );
 }

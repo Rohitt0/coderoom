@@ -2,43 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --- CodeRoom Live Cursor Styles --- */
+/* Define the exact color palette used in your reference image[cite: 1] */
+:root {
+  --ide-bg: #1e1e1e;       /* VS Code Main Editor Area */
+  --sidebar-bg: #181818;   /* VS Code Sidebar */
+  --tab-bg: #2d2d2d;       /* Active Tab */
+  --tab-inactive-bg: #252526; /* Inactive Tab */
+  --text-muted: #cccccc;   /* Default Text */
+  --text-vivid: #e1e1e1;   /* Active Text */
+  --border-color: #3e3e42;
+}
 
-/* 1. The selection highlight behind text */
+html, body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent global scrollbars[cite: 1] */
+  background: var(--ide-bg);
+  color: var(--text-vivid);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 14px;
+}
+
+/* Base layout for the IDE[cite: 1] */
+main {
+  position: fixed;
+  inset: 0;
+  display: flex; /* Sidebar and Editor sit side-by-side[cite: 1] */
+}
+
+/* --- Keep your existing Yjs selection logic --- */
 .yRemoteSelection {
   background-color: rgba(0, 122, 255, 0.2) !important;
 }
 
-/* 2. The vertical cursor line */
 .yRemoteSelectionHead {
   position: absolute !important;
   border-left: 2px solid #007aff !important;
   height: 100% !important;
-  box-sizing: border-box !important;
 }
 
-/* 3. The Name Tag (The "Blue Box") */
 .yRemoteSelectionHead::after {
-  /* This attribute MUST be exactly data-user-name */
   content: attr(data-user-name) !important; 
-  
   position: absolute !important;
   top: -22px !important; 
   left: -2px !important;
-  
-  /* Tag Styling */
   background-color: #007aff !important;
   color: white !important;
   font-size: 11px !important;
-  font-weight: 600 !important;
-  font-family: ui-sans-serif, system-ui, sans-serif !important;
-  padding: 2px 8px !important;
+  font-weight: 600;
+  padding: 2px 6px !important;
   border-radius: 4px 4px 4px 0px !important;
   white-space: nowrap !important;
-  
-  /* Ensure it's not hidden */
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  z-index: 50 !important;
 }
