@@ -10,8 +10,10 @@ import { LiveList } from "@liveblocks/client";
 
 export function Room({ children, roomId }: { children: ReactNode; roomId: string }) {
   return (
-    // Replace the string below with your actual pk_... key
-    <LiveblocksProvider publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}>
+    <LiveblocksProvider 
+      // Use your Render URL with the auth route appended
+      authEndpoint="https://coderoom-server-mvba.onrender.com/api/liveblocks-auth"
+    >
       <RoomProvider 
         id={roomId} 
         initialStorage={{
