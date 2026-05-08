@@ -56,12 +56,12 @@ Code snippet
 MONGO_URI=your_mongodb_connection_string
 LIVEBLOCKS_SECRET_KEY=your_secret_key
 PORT=5000
-3. Install & Run
-Bash
-# In both folders
-npm install
-npm run dev # Frontend
-node server.js # Backend
+
+## Try Here
+https://coderoom-pied.vercel.app
+
+<img width="1919" height="958" alt="image" src="https://github.com/user-attachments/assets/654fbcec-b324-419c-b4e9-7b1d91616623" />
+
 ## 🧠 How it Works
 Synchronization: When a user types, Yjs captures the change and broadcasts it through Liveblocks WebSockets.
 
