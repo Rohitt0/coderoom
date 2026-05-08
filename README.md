@@ -15,6 +15,7 @@ Responsive UI: A sleek, dark-themed interface built with Tailwind CSS, optimized
 Secure Auth: Token-based authentication handshake to manage private room access.
 
 🛠️ Tech Stack
+
 Frontend
 Framework: Next.js 15 (App Router)
 
