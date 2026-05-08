@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🚀 Coderoom | Real-Time Collaborative IDE
+Coderoom is a high-performance, full-stack collaborative code editor that allows multiple developers to write, share, and execute code in real-time. Built with a focus on seamless synchronization and low-latency execution, it brings a "Google Docs" experience to coding.
 
-## Getting Started
+✨ Features
+Real-Time Collaboration: Multiple users can edit the same file simultaneously with live cursor tracking.
 
-First, run the development server:
+Conflict Resolution: Powered by Yjs and CRDTs to ensure zero data loss during concurrent edits.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Multi-Language Execution: Supports instant execution for JavaScript and Python.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Persistent Storage: Save your progress and resume later, with data safely stored in MongoDB.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Responsive UI: A sleek, dark-themed interface built with Tailwind CSS, optimized for all screen sizes.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Secure Auth: Token-based authentication handshake to manage private room access.
 
-## Learn More
+🛠️ Tech Stack
+Frontend
+Framework: Next.js 15 (App Router)
 
-To learn more about Next.js, take a look at the following resources:
+Editor: CodeMirror 6
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Collaboration: Liveblocks & Yjs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Styling: Tailwind CSS & ShadCN UI
 
-## Deploy on Vercel
+Backend
+Runtime: Node.js
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Framework: Express.js
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Database: MongoDB Atlas
+
+Deployment: Render (Backend) & Vercel (Frontend)
+
+🚀 Getting Started
+1. Clone the Repositories
+Bash
+# Clone Frontend
+git clone https://github.com/Rohitt0/coderoom.git
+
+# Clone Backend
+git clone https://github.com/Rohitt0/coderoom-server.git
+2. Environment Setup
+Create a .env file in both directories:
+
+Frontend (.env.local):
+
+Code snippet
+NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=your_key
+NEXT_PUBLIC_SERVER_URL=https://coderoom-server-mvba.onrender.com
+Backend (.env):
+
+Code snippet
+MONGO_URI=your_mongodb_connection_string
+LIVEBLOCKS_SECRET_KEY=your_secret_key
+PORT=5000
+3. Install & Run
+Bash
+# In both folders
+npm install
+npm run dev # Frontend
+node server.js # Backend
+🧠 How it Works
+Synchronization: When a user types, Yjs captures the change and broadcasts it through Liveblocks WebSockets.
+
+Auth Handshake: The frontend requests a secure session token from the Express server, which validates the request using the Liveblocks Secret Key.
+
+Persistence: The editor state is periodically synced with MongoDB, allowing users to reload rooms without losing their code.
