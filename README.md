@@ -1,7 +1,7 @@
 ## 🚀 Coderoom | Real-Time Collaborative IDE
 Coderoom is a high-performance, full-stack collaborative code editor that allows multiple developers to write, share, and execute code in real-time. Built with a focus on seamless synchronization and low-latency execution, it brings a "Google Docs" experience to coding.
 
-✨ Features
+## ✨ Features
 Real-Time Collaboration: Multiple users can edit the same file simultaneously with live cursor tracking.
 
 Conflict Resolution: Powered by Yjs and CRDTs to ensure zero data loss during concurrent edits.
@@ -14,7 +14,7 @@ Responsive UI: A sleek, dark-themed interface built with Tailwind CSS, optimized
 
 Secure Auth: Token-based authentication handshake to manage private room access.
 
-🛠️ Tech Stack
+## 🛠️ Tech Stack
 
 Frontend
 Framework: Next.js 15 (App Router)
@@ -34,7 +34,7 @@ Database: MongoDB Atlas
 
 Deployment: Render (Backend) & Vercel (Frontend)
 
-🚀 Getting Started
+## 🚀 Getting Started
 1. Clone the Repositories
 Bash
 # Clone Frontend
@@ -62,7 +62,7 @@ Bash
 npm install
 npm run dev # Frontend
 node server.js # Backend
-🧠 How it Works
+## 🧠 How it Works
 Synchronization: When a user types, Yjs captures the change and broadcasts it through Liveblocks WebSockets.
 
 Auth Handshake: The frontend requests a secure session token from the Express server, which validates the request using the Liveblocks Secret Key.
