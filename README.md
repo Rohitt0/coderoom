@@ -1,4 +1,4 @@
-🚀 Coderoom | Real-Time Collaborative IDE
+## 🚀 Coderoom | Real-Time Collaborative IDE
 Coderoom is a high-performance, full-stack collaborative code editor that allows multiple developers to write, share, and execute code in real-time. Built with a focus on seamless synchronization and low-latency execution, it brings a "Google Docs" experience to coding.
 
 ✨ Features
