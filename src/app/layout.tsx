@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,7 +36,7 @@ export default function RootLayout({
           This defaults to 'afterInteractive', fixing the React Hydration crash 
           and preventing Pyodide from blocking the UI load.
         */}
-        <Script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js" />
+        
       </body>
     </html>
   );

@@ -10,14 +10,14 @@ import { LiveList } from "@liveblocks/client";
 
 export function Room({ children, roomId }: { children: ReactNode; roomId: string }) {
   return (
-    <LiveblocksProvider 
-      // Use your Render URL with the auth route appended
-      authEndpoint="https://coderoom-server-mvba.onrender.com/api/liveblocks-auth"
+    <LiveblocksProvider
+      
+      authEndpoint="/api/liveblocks-auth"
     >
-      <RoomProvider 
-        id={roomId} 
+      <RoomProvider
+        id={roomId}
         initialStorage={{
-          files: new LiveList([]), 
+          files: new LiveList([]),
         }}
       >
         <ClientSideSuspense fallback={
