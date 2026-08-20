@@ -62,10 +62,10 @@ html, body {
 }
 
 /* Base layout for the IDE[cite: 1] */
-main {
+.ide-main {
   position: fixed;
   inset: 0;
-  display: flex; /* Sidebar and Editor sit side-by-side[cite: 1] */
+  display: flex;
 }
 
 /* --- Keep your existing Yjs selection logic --- */
